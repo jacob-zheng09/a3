@@ -1,0 +1,11 @@
+ASSIGNMENT 3 PATCH NOTES
+
+Please check Piazza to verify if you need to redownload the starter files.
+
+Current Version: V1.4 (Nov 16, 2025)
+    Notes: 
+        - Removed username2 from username4's FOLLOWERS list.
+        - Added missing add_num_mutual_connections call in the main block.
+        - Added the correct sample data variables to the a2_checker.
+        - Added missing test_order_users_abusing_system to the a3_checker.
+        - Fixed parameter types for the message function in test_a3.py.
