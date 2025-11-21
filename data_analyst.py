@@ -302,8 +302,89 @@ def add_num_mutual_connections(users_dict: UserData) -> None:
     >>> sample_data_copy['username2'][NUM_MUTUALS] == 2
     True
     """
+    for key in users_dict:
+        if NUM_MUTUALS not in users_dict[key]:
+            users_dict[key][NUM_MUTUALS] = 0
+        for name in users_dict[key][FOLLOWERS]:
+            if name in users_dict[key][FOLLOWING]:
+                users_dict[key][NUM_MUTUALS] += 1
 
-    pass
+    """
+    delete work after
+    neeed to sort the lsit 
+    [11, 12, 13, 14, 15, 16, 17]
+    [11 | 12 | 13 | 14 | 15 | 16 | 17]
+        1    2    3    4    5    6          dividers
+      0    1    2    3    4    5    6       indexes
+     if p = 0.3, return 12
+        0.3 x 6 = 1.8 ---> round down to integer --> 1 --> 12
+     if p = 0.6 return 14
+        0.6 x 6 = 3.6 ---> round down to integer ----> 3 ---> 14
+    i = floor(p * dividers) cant use floor so int()? read documentation or test
+    """
+def get_quantile(num_list: list[int], percentage: float) -> int:
+    """ 
+    >>> get_quantile([11, 12, 13, 14, 15, 16, 17], 0.3)
+    12
+    >>> get_quantile([11, 12, 13, 14, 15, 16, 17], 0.6)
+    14
+    >>> get_quantile([], 0.6)
+    -1
+    >>> get_quantile([], -0.6)
+    -1
+    >>> get_quantile([1, 2, 3, 4, 5], -0.6)
+    -1
+    """
+    if not 0 <= percentage <= 1 or not num_list:
+        return -1
+    num_list.sort()
+    divider = len(num_list) - 1
+    i = int(percentage * divider)
+    return num_list[i]
+
+def add_bot_candidate_groups(user_data: UserData) -> None:
+    """precondition add_followers abd add_num_mutual_connections have been called
+    
+    use num post and num comments collect all values and put them into a list """
+    # for gathering 
+    num_com_list =[]
+    num_post_list = []
+    for user in user_data:
+        num_com_list.append(user_data[user][NUM_COMMENTS]).sort()
+        num_post_list.append(user_data[user][NUM_POSTS]).sort()
+
+
+    # for HCLP
+    HCLP_com_cond = get_quantile(num_com_list, P_HCLP_COMMENT)
+    HCLP_post_cond = get_quantile(num_post_list, P_HCLP_POSTS)
+    for user in user_data:
+        if user_data[user][NUM_COMMENTS] >= HCLP_com_cond and user_data[user][NUM_POSTS] <= HCLP_post_cond:
+            user_data[user][BOT_GROUPS].append(HCLP)
+
+    #for HCLM
+    HCNA_com_cond = get_quantile(num_com_list, P_HCNA_COMMENT)
+    for user in user_data:
+        if user_data[user][NUM_COMMENTS] >= HCNA_com_cond and :
+
+
+    
+
+def compare_account_creation(user_data: UserData, date: str, user: str) -> bool: 
+    """precondition date must be in format of yyyy-mm-dd user_data, account creation must be in format of yyyy-mm-dd, create user dictionary must be called"""
+    date_list = date.split("-")
+    userdate_list = user_data[user][ACCOUNT_CREATED].split("-")
+    if date_list[0] > userdate_list[0]:
+        return False 
+    if (date_list[0] == userdate_list[0] and date_list[1] == userdate_list[1]
+        and date_list[2] == userdate_list[2]):
+        return False
+    return True
+# this cover all cases if year is smaller than date then return false, if equal check if day and month equal if it is then return false
+# so that means only year factor matters
+    
+
+
+
 
 
 if __name__ == "__main__":
