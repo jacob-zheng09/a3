@@ -16,18 +16,18 @@ NUM_MUTUALS = 'num_mutuals'
 BOT_GROUPS = 'bot_groups'
 
 # Column indexes for users file
-USERNAME_COL = 0 # username
-DOB_COL = 1 # date of birth
-NUM_POSTS_COL = 2 # number of posts made
-NUM_COMMENTS_COL = 3 # number of comments made
-ACCOUNT_CREATED_COL = 4 # date of account creation
+USERNAME_COL = 0 # username                    # USED in create_user
+DOB_COL = 1 # date of birth                                 # USED in create_user
+NUM_POSTS_COL = 2 # number of posts made                     # USED in create_user
+NUM_COMMENTS_COL = 3 # number of comments made           # USED in create_user
+ACCOUNT_CREATED_COL = 4 # date of account creation       # USED in create_user
 
 # Column indexes for follower file
 FOLLOWER_COL = 0
 FOLLOWING_COL = 1
 
 # seperator for reading files
-SEP = ','
+SEP = ','                          # USED in create_user
 
 # Bot Group Names
 HCLP = 'highCommentsLowPosts'

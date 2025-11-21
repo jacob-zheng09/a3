@@ -240,8 +240,49 @@ def create_users_dictionary(users_file: TextIO) -> UserData:
                   users_file is in the format described in the handout
 
     """
+    user_data = {}
+    users_file.readline()
+    for line in users_file:
+        linelist = line.split(SEP)
+        name = linelist[USERNAME_COL].strip()
+        dob = linelist[DOB_COL].strip()
+        num_post = int(linelist[NUM_POSTS_COL].strip())
+        num_comments = int(linelist[NUM_COMMENTS_COL].strip())
+        account_created = linelist[ACCOUNT_CREATED_COL].strip()
+        if name not in user_data:
+            user_data[name] = {}
+            user_data[name][DOB] = dob
+            user_data[name][NUM_POSTS] = num_post
+            user_data[name][NUM_COMMENTS] = num_comments
+            user_data[name][ACCOUNT_CREATED] = account_created
+            user_data[name][FOLLOWERS] = []
+            user_data[name][FOLLOWING] = []
+            user_data[name][BOT_GROUPS] = []
+    return user_data
 
-    pass
+def add_follower(user_data: UserData, file: TextIO) -> None:
+    """
+    Precondition: file is open for reading
+                file is in the format described in the handout
+
+Note that there should not be any duplicate usernames for each FOLLOWERS and FOLLOWING list in the UserData dictionary.
+ 
+You do NOT need to write any examples/doctests in this function's docstring.
+Mutate? YES
+    """
+    file.readline()
+    for line in file:
+        linelist = line.split(SEP)
+        follower = linelist[FOLLOWER_COL].strip()
+        following = linelist[FOLLOWING_COL].strip()
+        if follower in user_data:
+            if following not in user_data[follower][FOLLOWING]:
+                user_data[follower][FOLLOWING].append(following)
+        if following in user_data:
+            if follower not in user_data[following][FOLLOWERS]:
+                user_data[following][FOLLOWERS].append(follower)
+
+
 
 
 # We provide the header and part of a docstring for this function to
