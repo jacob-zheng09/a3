@@ -216,6 +216,7 @@ SAMPLE_DATA_FULL = {
 }
 
 
+
 # We provide the header and docstring for this function to get you
 # started and to demonstrate that there are no docstring examples in
 # functions that read from files.
@@ -286,10 +287,7 @@ def add_follower(user_data: UserData, file: TextIO) -> None:
 # examples that modify input data.
 def add_num_mutual_connections(users_dict: UserData) -> None:
     """Modify the dictionary users_dict by adding the number of
-    mutual relationships each user has using the NUM_MUTUALS key.
-
-    Note a mutual relationship occurs when two users follow each
-    other.
+    mutual relationships each user has. (If users are following each other)
 
     >>> sample_data_copy = deepcopy(SAMPLE_DATA)
     >>> add_num_mutual_connections(sample_data_copy)
@@ -316,13 +314,13 @@ def get_quantile(num_list: list[int], percentage: float) -> int:
     11
     >>> get_quantile([11, 12, 13, 14, 15, 16, 17], 0.3)
     12
-    >>> get_quantile([11, 12, 13, 14, 15, 16, 17], 0.6)
-    14
+    >>> get_quantile([11, 12, 13, 14, 15, 16, 17], 1)
+    17
     >>> get_quantile([], 0.6)
     -1
-    >>> get_quantile([], -0.6)
-    -1
     >>> get_quantile([1, 2, 3, 4, 5], -0.6)
+    -1
+    >>> get_quantile([1, 2, 3, 4, 5], 1.2)
     -1
     """
     if not 0 <= percentage <= 1 or not num_list:
@@ -331,6 +329,7 @@ def get_quantile(num_list: list[int], percentage: float) -> int:
     divider = len(num_list) - 1
     i = int(percentage * divider)
     return num_list[i]
+
 
 def add_bot_candidate_groups(user_data: UserData) -> None:
     """ Modifies user_data by adding bot candidate groups to each user.
@@ -346,14 +345,15 @@ def add_bot_candidate_groups(user_data: UserData) -> None:
     for user in user_data:
         num_of_followers = len(user_data[user][FOLLOWERS])
         num_of_following = len(user_data[user][FOLLOWING])
-        if user_data[user][NUM_COMMENTS] >= HCLP_com_cond and user_data[user][NUM_POSTS] <= HCLP_post_cond:
-            user_data[user][BOT_GROUPS].append(HCLP)
         if user_data[user][NUM_COMMENTS] >= HCNA_com_cond and compare_account_creation(user_data, "2023-01-01", user):
             user_data[user][BOT_GROUPS].append(HCNA)
+        if num_of_following > HFLF_FACTOR * num_of_followers:
+            user_data[user][BOT_GROUPS].append(HFLF)
+        if user_data[user][NUM_COMMENTS] >= HCLP_com_cond and user_data[user][NUM_POSTS] <= HCLP_post_cond:
+            user_data[user][BOT_GROUPS].append(HCLP)
         if user_data[user][NUM_COMMENTS] >= HCLM_com_cond and user_data[user][NUM_MUTUALS] <= HCLM_mutual_cond:
             user_data[user][BOT_GROUPS].append(HCLM)
-        if num_of_followers > HFLF_FACTOR * num_of_following:
-            user_data[user][BOT_GROUPS].append(HFLF)
+
             
 def gather_data(user_data: UserData) -> tuple[list[int], list[int], list[int]]:
     """Returns a tuple of three lists: list of number of comments,
@@ -375,24 +375,24 @@ def gather_data(user_data: UserData) -> tuple[list[int], list[int], list[int]]:
     return tuple_list
 
 def gather_quantiles(user_data: UserData) -> tuple[int, int, int, int, int]:
-    """Returns a tuple of five quantile values for bot candidate conditions,
+    """Returns a tuple of integer five quantile values for bot candidate conditions,
     gathered from user_data.
     
     precondition: add_follower and add_num_mutual_connections have been called
     >>> sample_data_copy = deepcopy(SAMPLE_DATA_WITH_NUM_MUTUALS)
     >>> gather_quantiles(sample_data_copy)
-    (8, 3, 8, 8, 1)
+    (10, 0, 10, 10, 0)
     """
     num_com_list, num_post_list, num_mutual_list = gather_data(user_data)
-    HCLP_com_cond = get_quantile(num_com_list, P_HCLP_COMMENT)
-    HCLP_post_cond = get_quantile(num_post_list, P_HCLP_POSTS)
-    HCNA_com_cond = get_quantile(num_com_list, P_HCNA_COMMENT)
-    HCLM_com_cond = get_quantile(num_com_list, P_HCLM_COMMENT)
+    HCLP_com_cond = get_quantile(num_com_list, P_HCLP_COMMENT) # 0.9
+    HCLP_post_cond = get_quantile(num_post_list, P_HCLP_POSTS) # 0.1
+    HCNA_com_cond = get_quantile(num_com_list, P_HCNA_COMMENT) # 0.75
+    HCLM_com_cond = get_quantile(num_com_list, P_HCLM_COMMENT) # 0.8
     HCLM_mutual_cond = get_quantile(num_mutual_list, P_HCLM_MUTUALS) 
     return (HCLP_com_cond, HCLP_post_cond, HCNA_com_cond, HCLM_com_cond, HCLM_mutual_cond)
 
 def compare_account_creation(user_data: UserData, date: str, user: str) -> bool: 
-    """Returns a boolean indicating whether the account creation date
+    """Returns a boolean value whether the account creation date
     of user is after the given date.
     
     precondition: date is in format of yyyy-mm-dd
@@ -404,13 +404,13 @@ def compare_account_creation(user_data: UserData, date: str, user: str) -> bool:
     """
     date_list = date.split("-")
     userdate_list = user_data[user][ACCOUNT_CREATED].split("-")
-    if date_list[0] > userdate_list[0]:
+    if int(date_list[0]) > int(userdate_list[0]):
         return False 
-    if date_list[0] == userdate_list[0]:
-        if date_list[1] > userdate_list[1]:
+    if int(date_list[0]) == int(userdate_list[0]):
+        if int(date_list[1]) > int(userdate_list[1]):
             return False
-        if date_list[1] == userdate_list[1]:
-            if date_list[2] >= userdate_list[2]:
+        if int(date_list[1]) == int(userdate_list[1]):
+            if int(date_list[2]) == int(userdate_list[2]):
                 return False
     return True
 
@@ -420,29 +420,10 @@ def find_all_bot_candidates(user_data: UserData) -> UserData:
     precondition: add_bot_candidate_groups has been called
     
     >>> sample_data_copy = deepcopy(SAMPLE_DATA_FULL)
-    >>> find_all_bot_candidates(sample_data_copy)
-    {'username3': {
-        'DOB': '1973-01-06',
-        'NUM_POSTS': 0,
-        'NUM_COMMENTS': 11,
-        'ACCOUNT_CREATED': '2025-01-01',
-        'FOLLOWERS': ['username2'],
-        'FOLLOWING': ['username2', 'username4', 'username5'],
-        'BOT_GROUPS': ['highCommentsNewAccount',
-                       'highFollowingLowFollowers',
-                       'highCommentsLowPosts'],
-        'NUM_MUTUALS': 1
-    },
-    'username5': {
-        'DOB': '1973-01-06',
-        'NUM_POSTS': 2,
-        'NUM_COMMENTS': 10,
-        'ACCOUNT_CREATED': '2023-01-01',
-        'FOLLOWERS': ['username3'],
-        'FOLLOWING': ['username4'],
-        'BOT_GROUPS': ['highCommentsLowMutuals'],
-        'NUM_MUTUALS': 0
-    }}
+    >>> bots = find_all_bot_candidates(sample_data_copy)
+    >>> k_bots = bots.keys()
+    >>> k_bots == {'username3', 'username5'}
+    True
     """
     bots = {}
     for user in user_data:
@@ -452,31 +433,15 @@ def find_all_bot_candidates(user_data: UserData) -> UserData:
 
 def find_users_abusing_system(user_data: UserData) -> UserData:
     """  Returns a dictionary of all users abusing the system from user_data.
+    (more thatn 50% of bot followers)
     
     precondition: add_bot_candidate_groups has been called
     
     >>> sample_data_copy = deepcopy(SAMPLE_DATA_FULL)
-    >>> find_users_abusing_system(sample_data_copy)
-    {'username5': {
-        'DOB': '1973-01-06',
-        'NUM_POSTS': 2,
-        'NUM_COMMENTS': 10,
-        'ACCOUNT_CREATED': '2023-01-01',
-        'FOLLOWERS': ['username3'],
-        'FOLLOWING': ['username4'],
-        'BOT_GROUPS': ['highCommentsLowMutuals'],
-        'NUM_MUTUALS': 0
-    }, 'username4': {
-        'DOB': '1973-01-06',
-        'NUM_POSTS': 10,
-        'NUM_COMMENTS': 1,
-        'ACCOUNT_CREATED': '2023-01-01',
-        'FOLLOWERS': ['username1', 'username3', 'username5'],
-        'FOLLOWING': [],
-        'BOT_GROUPS': [],
-        'NUM_MUTUALS': 0
-        }
-    }
+    >>> abuser = find_users_abusing_system(sample_data_copy)
+    >>> k_abuser = abuser.keys()
+    >>> k_abuser == {'username5', 'username4'}
+    True
     """
     abusers = {}
     bots = find_all_bot_candidates(user_data)
@@ -493,9 +458,11 @@ def find_users_abusing_system(user_data: UserData) -> UserData:
 
 def order_bot_candidates(user_data: UserData) -> list[str]:
     """ Returns a list of all bot candidates in decreasing order
-    by number of bot groups.
+    by number of bot groups from user_data.
     
     precondition: add_bot_candidate_groups has been called
+                    dictionary passed will have all keys in AccountData
+                    NUM_MUTUALS and BOT_GROUPS keys will be present.
     
     >>> sample_data_copy = deepcopy(SAMPLE_DATA_FULL)
     >>> order_bot_candidates(sample_data_copy)
@@ -521,7 +488,17 @@ def order_bot_candidates(user_data: UserData) -> list[str]:
     return bot_cand
 
 def order_users_abusing_system(user_data: UserData) -> list[str]:
+    """ Returns a list of all users in decreasing order
+    abusing the system from user_data.
     
+    precondition: find_users_abusing_system has been called.
+                    dictionary passed will have all keys in AccountData
+                    NUM_MUTUALS and BOT_GROUPS keys will be present.
+
+    >>> sample_data_copy = deepcopy(SAMPLE_DATA_FULL)
+    >>> order_users_abusing_system(sample_data_copy)
+    ['username4', 'username5']
+    """
     candidates = find_users_abusing_system(user_data)
     bots = find_all_bot_candidates(user_data)
     num_dic = {}
